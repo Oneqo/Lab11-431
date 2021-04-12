@@ -37,4 +37,28 @@ public class Utility {
         }while(!isDone);
         return c;
     }
+
+    public static String getCoverageFromSkeleton(String result) {
+        StringBuilder coverage = new StringBuilder();
+        String[] lines = result.split("\n");
+        int startIndex = 0;
+        //Get index of methods line
+        for(int i = 0; i != lines.length; i++){
+            coverage.append('\n');
+            if(lines[i].equals("\\\\Methods:")){
+                startIndex = i+1;
+                break;
+            }
+        }
+
+        for(; startIndex != lines.length; startIndex++){
+            if(lines[startIndex].contains("(")){
+               coverage.append("0\n");
+            }else{
+                coverage.append('\n');
+            }
+        }
+
+        return coverage.toString();
+    }
 }

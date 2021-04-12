@@ -1,6 +1,7 @@
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -15,23 +16,34 @@ public class CoverageToolGUI {
     private JList directoryViewport;
     private JScrollPane skeletonScrollPane;
     private JFrame frame;
-    private
+    private JTextArea coverageStatistics;
 
     CoverageToolGUI(){
         frame = new JFrame();
         frame.setContentPane(mainPanel);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setMinimumSize(new Dimension(800,600));
+        frame.setMinimumSize(new Dimension(700,450));
         frame.setVisible(true);
 
-        skeletonScrollPane.setRowHeader(new JViewport());
+        //create rowHeader
+        String coverage = new String();
+        coverageStatistics = new JTextArea();
+        coverageStatistics.setBackground(Color.LIGHT_GRAY);
+        coverageStatistics.setEditable(false);
+        coverageStatistics.setText(coverage);
+
+        JViewport vw = new JViewport();
+        vw.setView(coverageStatistics);
+        skeletonScrollPane.setRowHeader(vw);
 
         openDirectory.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 JFileChooser fc = new JFileChooser();
                 fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-                fc.showDialog(frame, "Choose directory");
+                int result = fc.showDialog(frame, "Choose directory");
+                if(result == JFileChooser.CANCEL_OPTION || result == JFileChooser.ERROR_OPTION)
+                    return;
                 File pathToDirectory = fc.getSelectedFile();
                 directoryTextBox.setText(pathToDirectory.toString());
                 FileFilter classFilter = new FileFilter() {
@@ -52,8 +64,11 @@ public class CoverageToolGUI {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 if(!e.getValueIsAdjusting()){
-                    String result = "No Selection";
-                    File pathToFile = ((FileWrapper) directoryViewport.getSelectedValue()).getFile();
+                    String result = "No Selection", parsedCoverage;
+                    FileWrapper fr = (FileWrapper) directoryViewport.getSelectedValue();
+                    if(fr == null)
+                        return;
+                    File pathToFile = fr.getFile();
                     Class classObj = Utility.getClassFromPath(pathToFile);
                     SkeletonBuilder sk = new SkeletonBuilder();
                     try{
@@ -61,7 +76,10 @@ public class CoverageToolGUI {
                     }catch (ClassNotFoundException err){
                         //do nothing
                     }
+                    parsedCoverage = Utility.getCoverageFromSkeleton(result);
                     skeletonViewport.setText(result);
+                    coverageStatistics.setText(parsedCoverage);
+                    skeletonScrollPane.getViewport().updateUI();
                 }
             }
         });
